@@ -1,0 +1,11 @@
+{
+  "project":
+    {
+      "description": "Set up USENET moderation services on modern systems.",
+      "name": "stump",
+      "repo": "sellout/stump-nix",
+      "summary": "Nix packaging for the STUMP USENET robomoderator",
+      "version": "0.1.0.0",
+    },
+  "type": { "name": "nix" },
+}
