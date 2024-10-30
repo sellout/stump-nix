@@ -9,8 +9,8 @@
       "cache.garnix.io:CTFPyKSLcx5RMJKfLo5EEPUObbA78b0YQ2DTCJXqr9g="
     ];
     ## Isolate the build.
-    registries = false;
     sandbox = "relaxed";
+    use-registries = false;
   };
 
   outputs = {
@@ -19,10 +19,11 @@
     flaky,
     nixpkgs,
     self,
+    systems,
   }: let
     pname = "stump";
 
-    supportedSystems = flaky.lib.defaultSystems;
+    supportedSystems = import systems;
 
     localPackages = pkgs: let
       stump = let
@@ -152,8 +153,6 @@
         local = final: prev: localPackages final;
       };
 
-      lib = {};
-
       homeConfigurations =
         builtins.listToAttrs
         (builtins.map
@@ -168,15 +167,10 @@
           supportedSystems);
     }
     // flake-utils.lib.eachSystem supportedSystems (system: let
-      pkgs = import nixpkgs {
-        inherit system;
-        overlays = [
-          bash-strict-mode.overlays.default
-          flaky.overlays.dependencies
-        ];
-      };
-
-      src = pkgs.lib.cleanSource ./.;
+      pkgs = nixpkgs.legacyPackages.${system}.appendOverlays [
+        bash-strict-mode.overlays.default
+        flaky.overlays.dependencies
+      ];
     in {
       packages =
         {
@@ -185,7 +179,7 @@
         // localPackages pkgs;
 
       projectConfigurations =
-        flaky.lib.projectConfigurations.default {inherit pkgs self;};
+        flaky.lib.projectConfigurations.nix {inherit pkgs self;};
 
       devShells =
         self.projectConfigurations.${system}.devShells
@@ -202,5 +196,6 @@
     bash-strict-mode.follows = "flaky/bash-strict-mode";
     flake-utils.follows = "flaky/flake-utils";
     nixpkgs.follows = "flaky/nixpkgs";
+    systems.follows = "flaky/systems";
   };
 }
