@@ -25,111 +25,8 @@
 
     supportedSystems = import systems;
 
-    localPackages = pkgs: let
-      stump = let
-        name = "STUMP";
-        version = "2.5";
-      in
-        bash-strict-mode.lib.checkedDrv pkgs (pkgs.stdenv.mkDerivation {
-          inherit name version;
-          src = pkgs.fetchzip {
-            url = "https://www.algebra.com/~ichudov/stump/download/${name}_${builtins.replaceStrings ["."] ["_"] version}.tar.gz";
-            hash = "sha256-+mZpvzHx8FSJfSP3IP/le/MGiipS92EwHtZgMuHB8BA=";
-          };
-
-          buildInputs = [pkgs.bash-strict-mode];
-
-          postUnpack = ''
-            echo $src
-            echo $(realpath .)
-            ls $(realpath .)
-
-            dist_dirs=(etc bin tmp data)
-            for dir in "''${dist_dirs[@]}"; do
-              mv "source/$dir.dist" "source/$dir"
-            done
-          '';
-
-          postPatch = ''
-            ## The compile script doesn’t error on failure.
-            substituteInPlace c/compile \
-              --replace "CC=cc" "CC=\"cc $CFLAGS\"" \
-              --replace "echo \"\"" "exit 1"
-          '';
-
-          CFLAGS = [
-            "-Wno-aggressive-loop-optimizations"
-            "-Wno-builtin-declaration-mismatch"
-            "-Wno-implicit-function-declaration"
-            "-Wno-implicit-int"
-            "-Wno-stringop-overflow"
-          ];
-
-          buildPhase = ''
-            ( cd c
-              ./compile
-            )
-          '';
-
-          installPhase = ''
-            mkdir -p "$out"
-            cp -r etc bin tmp data "$out/"
-          '';
-
-          meta = {
-            description = "Secure Team-based Usenet Moderation Program";
-            homepage = "https://www.algebra.com/~ichudov/stump/";
-            license = pkgs.lib.licenses.gpl2;
-            maintainers = with pkgs.lib.maintainers; [sellout];
-            platforms = pkgs.lib.platforms.unix;
-          };
-        });
-    in {
-      inherit stump;
-
-      webstump = let
-        name = "webstump";
-      in
-        bash-strict-mode.lib.checkedDrv pkgs (pkgs.stdenv.mkDerivation {
-          inherit name;
-          version = "2016-04-21";
-          src = pkgs.fetchzip {
-            url = "https://www.algebra.com/~ichudov/stump/download/${name}.tar.gz";
-            ## NB: If this hash breaks, make sure to update the `version` with
-            ##     the new publication date.
-            hash = "sha256-NmMQAFij5Le4nj5vvjPRCk+GcDyITTzK1lkSW449nqA=";
-          };
-
-          nativeBuildInputs = [stump];
-
-          CFLAGS = ["-Wno-implicit-function-declaration"];
-
-          preBuild = ''
-            substituteInPlace ./Makefile \
-              --replace "/home/ichudov/public_html/stump/webstump" "$(realpath .)"
-
-            substituteInPlace ./src/Makefile \
-              --replace '$(CC) -o' '$(CC) $(CFLAGS) -o' \
-              --replace '	chmod 755 $@' "" \
-              --replace '	chmod u+s $@' ""
-          '';
-
-          installPhase = ''
-            mkdir -p "$out"
-            ## TODO: Figure out exactly what needs to be copied over (maybe add
-            ##       an `install` target upstream).
-            cp -r bin config images index.html scripts "$out/"
-          '';
-
-          meta = {
-            description = "Web interface for STUMP";
-            homepage = "https://www.algebra.com/~ichudov/stump/";
-            license = pkgs.lib.licenses.gpl2;
-            maintainers = with pkgs.lib.maintainers; [sellout];
-            platforms = pkgs.lib.platforms.unix;
-          };
-        });
-    };
+    localPackages = pkgs:
+      import ./nix/packages {inherit bash-strict-mode pkgs;};
   in
     {
       schemas = {
@@ -159,8 +56,8 @@
           (flaky.lib.homeConfigurations.example self [
             ({pkgs, ...}: {
               home.packages = [
-                pkgs.${pname}
-                pkgs."web${pname}"
+                pkgs.stump
+                pkgs.webstump
               ];
             })
           ])
@@ -173,10 +70,8 @@
       ];
     in {
       packages =
-        {
-          default = self.packages.${system}.${pname};
-        }
-        // localPackages pkgs;
+        localPackages pkgs
+        // {default = self.packages.${system}.webstump;};
 
       projectConfigurations =
         flaky.lib.projectConfigurations.nix {inherit pkgs self;};
