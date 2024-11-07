@@ -1,6 +1,6 @@
 # STUMP for Nix
 
-[![built with garnix](https://img.shields.io/endpoint?url=https%3A%2F%2Fgarnix.io%2Fapi%2Fbadges%2Fsellout%2Fstump-nix)](https://garnix.io)
+[![built with garnix](https://img.shields.io/endpoint?url=https%3A%2F%2Fgarnix.io%2Fapi%2Fbadges%2Fsellout%2Fstump-nix)](https://garnix.io/repo/sellout/stump-nix)
 
 Nix packaging for [the STUMP USENET robomoderator](https://www.algebra.com/~ichudov/stump/)
 
