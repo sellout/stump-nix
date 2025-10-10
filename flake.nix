@@ -2,11 +2,18 @@
   description = "Nix packaging for the STUMP USENET robomoderator";
 
   nixConfig = {
+    ## NB: This is a consequence of using `self.pkgsLib.runEmptyCommand`, which
+    ##     allows us to sandbox derivations that otherwise can’t be.
+    allow-import-from-derivation = true;
     ## https://github.com/NixOS/rfcs/blob/master/rfcs/0045-deprecate-url-syntax.md
     extra-experimental-features = ["no-url-literals"];
-    extra-substituters = ["https://cache.garnix.io"];
+    extra-substituters = [
+      "https://cache.garnix.io"
+      "https://sellout.cachix.org"
+    ];
     extra-trusted-public-keys = [
       "cache.garnix.io:CTFPyKSLcx5RMJKfLo5EEPUObbA78b0YQ2DTCJXqr9g="
+      "sellout.cachix.org-1:v37cTpWBEycnYxSPAgSQ57Wiqd3wjljni2aC0Xry1DE="
     ];
     ## Isolate the build.
     sandbox = "relaxed";
@@ -14,7 +21,6 @@
   };
 
   outputs = {
-    bash-strict-mode,
     flake-utils,
     flaky,
     nixpkgs,
@@ -25,8 +31,7 @@
 
     supportedSystems = import systems;
 
-    localPackages = pkgs:
-      import ./nix/packages {inherit bash-strict-mode pkgs;};
+    localPackages = pkgs: import ./nix/packages {inherit pkgs;};
   in
     {
       schemas = {
@@ -45,7 +50,7 @@
       overlays = {
         default =
           nixpkgs.lib.composeExtensions
-          bash-strict-mode.overlays.default
+          flaky.overlays.default
           self.overlays.local;
         local = final: prev: localPackages final;
       };
@@ -53,20 +58,20 @@
       homeConfigurations =
         builtins.listToAttrs
         (builtins.map
-          (flaky.lib.homeConfigurations.example self [
-            ({pkgs, ...}: {
-              home.packages = [
-                pkgs.stump
-                pkgs.webstump
-              ];
-            })
-          ])
+          (flaky.lib.homeConfigurations.example self
+            [
+              ({pkgs, ...}: {
+                home.packages = [
+                  pkgs.stump
+                  pkgs.webstump
+                ];
+              })
+            ])
           supportedSystems);
     }
     // flake-utils.lib.eachSystem supportedSystems (system: let
       pkgs = nixpkgs.legacyPackages.${system}.appendOverlays [
-        bash-strict-mode.overlays.default
-        flaky.overlays.dependencies
+        flaky.overlays.default
       ];
     in {
       packages =
@@ -88,7 +93,6 @@
     ## Flaky should generally be the source of truth for its inputs.
     flaky.url = "github:sellout/flaky";
 
-    bash-strict-mode.follows = "flaky/bash-strict-mode";
     flake-utils.follows = "flaky/flake-utils";
     nixpkgs.follows = "flaky/nixpkgs";
     systems.follows = "flaky/systems";
