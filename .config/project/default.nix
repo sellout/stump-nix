@@ -24,7 +24,13 @@
   editorconfig.enable = true;
   programs = {
     treefmt.enable = true;
-    vale.enable = true;
+    vale = {
+      enable = true;
+      vocab.${config.project.name}.accept = [
+        "formatters"
+        "robomoderator"
+      ];
+    };
   };
 
   ## CI
