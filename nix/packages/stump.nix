@@ -1,5 +1,4 @@
 {
-  bash-strict-mode,
   checkedDrv,
   fetchFromSavannah,
   meta,
@@ -17,8 +16,6 @@ in
       rev = "master";
       hash = "sha256-tjlGPWwa4ZDM08qp+iwKBDyeyrZGp0uSBNmw73cTzDQ=";
     };
-
-    buildInputs = [bash-strict-mode];
 
     postUnpack = ''
       echo $src

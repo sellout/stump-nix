@@ -297,10 +297,6 @@
     },
     "root": {
       "inputs": {
-        "bash-strict-mode": [
-          "flaky",
-          "bash-strict-mode"
-        ],
         "flake-utils": [
           "flaky",
           "flake-utils"
