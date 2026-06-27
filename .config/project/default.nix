@@ -41,7 +41,10 @@
     flakehub.enable = true;
     github = {
       enable = true;
-      settings.repository.topics = ["usenet" "moderation"];
+      settings.repository = {
+        private = false;
+        topics = ["usenet" "moderation"];
+      };
     };
   };
 }
